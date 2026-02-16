@@ -45,11 +45,12 @@
         'advertisement-content', 'advertisement-wrapper', 'advertisement-header'
       ];
 
-      // Create bait elements with more realistic content
+      // Create bait elements with more realistic content (do NOT use visibility:hidden
+      // or display:none — we check for those to detect adblock; our own style would cause false positives)
       adClasses.forEach(className => {
         const bait = document.createElement('div');
         bait.className = className;
-        bait.style.cssText = 'position:absolute; left:-9999px; width:1px; height:1px; visibility:hidden;';
+        bait.style.cssText = 'position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0.01; pointer-events:none;';
         bait.innerHTML = 'Advertisement';
         bait.setAttribute('data-ad', 'true');
         document.body.appendChild(bait);
@@ -66,42 +67,40 @@
       let networkBlockedCount = 0;
       let networkTests = 0;
       
+      // Only treat as network-blocked if most or all ad scripts fail (reduces false positives
+      // from firewall, privacy settings, or single script 404)
+      const networkBlockedThreshold = Math.ceil(testUrls.length * 0.67);
       testUrls.forEach(url => {
         const script = document.createElement('script');
         script.onload = () => {
           networkTests++;
           if (networkTests === testUrls.length) {
-            detectionResults.networkBlocked = networkBlockedCount > 0;
+            detectionResults.networkBlocked = networkBlockedCount >= networkBlockedThreshold;
           }
         };
         script.onerror = () => {
           networkBlockedCount++;
           networkTests++;
           if (networkTests === testUrls.length) {
-            detectionResults.networkBlocked = networkBlockedCount > 0;
+            detectionResults.networkBlocked = networkBlockedCount >= networkBlockedThreshold;
           }
         };
         script.src = url;
         document.head.appendChild(script);
       });
 
-      // Method 3: Element detection
+      // Method 3: Element detection (element must stay "visible" in computed style so we only
+      // detect when an adblocker hides it, not our own styling)
       const testElement = document.createElement('div');
       testElement.className = 'ads';
-      testElement.style.cssText = 'position:absolute; left:-9999px; width:1px; height:1px;';
+      testElement.style.cssText = 'position:absolute; left:-9999px; top:0; width:1px; height:1px; opacity:0.01;';
       testElement.innerHTML = 'Advertisement';
       document.body.appendChild(testElement);
 
-      // Method 4: Check for common adblock indicators
-      const adblockIndicators = [
-        'uBlock', 'AdBlock', 'AdblockPlus', 'Ghostery', 'Privacy Badger',
-        'Brave', 'DuckDuckGo', 'Opera', 'Vivaldi'
-      ];
-      
-      let userAgent = navigator.userAgent.toLowerCase();
-      let hasAdblockIndicator = adblockIndicators.some(indicator => 
-        userAgent.includes(indicator.toLowerCase())
-      );
+      // Method 4: User-Agent is NOT used for final decision — browser names like Brave, Opera,
+      // Vivaldi, DuckDuckGo are not adblock; using them caused false positives for users without adblock
+      const userAgent = navigator.userAgent.toLowerCase();
+      const hasAdblockIndicator = false;
 
       // Comprehensive detection
       setTimeout(function() {
@@ -182,10 +181,9 @@
     window.testAdblockComprehensive = function() {
       log('Running comprehensive AdBlock detection test...');
       
-      // Test 1: User Agent
+      // Test 1: User Agent (browser names like Brave/Opera/Vivaldi not used — they cause false positives)
       const userAgent = navigator.userAgent.toLowerCase();
-      const adblockIndicators = ['uBlock', 'AdBlock', 'AdblockPlus', 'Ghostery', 'Privacy Badger', 'Brave', 'DuckDuckGo', 'Opera', 'Vivaldi'];
-      const hasAdblockIndicator = adblockIndicators.some(indicator => userAgent.includes(indicator.toLowerCase()));
+      const hasAdblockIndicator = false;
       
       // Test 2: Style detection
       const testElement = document.createElement('div');
@@ -249,7 +247,7 @@
         document.body.removeChild(testElement);
         
         const userAgent = navigator.userAgent.toLowerCase();
-        const hasAdblockIndicator = userAgent.includes('brave') || userAgent.includes('duckduckgo') || userAgent.includes('opera') || userAgent.includes('vivaldi');
+        const hasAdblockIndicator = false; // browser names no longer used to avoid false positives
         
         const result = hasAdblockIndicator || isHidden;
         
