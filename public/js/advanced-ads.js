@@ -1,6 +1,6 @@
-/* Advanced ad handling: detect adblock and adjust ad density.
-   - If adblock is ON: inject dense house-ad placements (top sticky, bottom sticky, inline blocks)
-   - If adblock is OFF: keep current experience (no extra injection here)
+/* Advanced ad handling: detect adblock and show/hide banner.
+   - If adblock is ON: show "turn off AdBlock" banner
+   - If adblock is OFF: hide banner, normal experience
 */
 (function() {
   if (window.__advancedAdsInitialized) return; // prevent double-init
@@ -256,144 +256,6 @@
       }, 100);
     };
     
-    // Add manual redirect test function
-    window.testRedirect = function() {
-      const currentPath = window.location.pathname;
-      let redirectPath = '/homepageadblock';
-      
-      if (currentPath === '/' || currentPath === '/homepageadblock') {
-        redirectPath = '/homepageadblock';
-      } else if (currentPath.includes('/football')) {
-        redirectPath = '/footballadblock';
-      } else if (currentPath.includes('/basketball')) {
-        redirectPath = '/basketballadblock';
-      } else if (currentPath.includes('/tennis')) {
-        redirectPath = '/tennisadblock';
-      } else if (currentPath.includes('/ufc')) {
-        redirectPath = '/ufcadblock';
-      } else if (currentPath.includes('/rugby')) {
-        redirectPath = '/rugbyadblock';
-      } else if (currentPath.includes('/baseball')) {
-        redirectPath = '/baseballadblock';
-      } else if (currentPath.includes('/match/')) {
-        redirectPath = currentPath.replace('/match/', '/matchadblock/');
-      }
-      
-      log('Manual redirect test - Current:', currentPath, 'Redirect to:', redirectPath);
-      alert('Redirecting to: ' + redirectPath);
-      window.location.href = redirectPath;
-    };
-    
-    // Add test function to simulate AdBlock detection
-    window.testAdblockRedirect = function() {
-      log('Testing AdBlock redirect logic...');
-      const currentPath = window.location.pathname;
-      
-      if (!currentPath.includes('adblock')) {
-        // Simulate AdBlock detected - redirect to adblock version
-        let redirectPath = '/homepageadblock';
-        
-        if (currentPath === '/') {
-          redirectPath = '/homepageadblock';
-        } else if (currentPath.includes('/football')) {
-          redirectPath = '/footballadblock';
-        } else if (currentPath.includes('/basketball')) {
-          redirectPath = '/basketballadblock';
-        } else if (currentPath.includes('/tennis')) {
-          redirectPath = '/tennisadblock';
-        } else if (currentPath.includes('/ufc')) {
-          redirectPath = '/ufcadblock';
-        } else if (currentPath.includes('/rugby')) {
-          redirectPath = '/rugbyadblock';
-        } else if (currentPath.includes('/baseball')) {
-          redirectPath = '/baseballadblock';
-        } else if (currentPath.includes('/match/')) {
-          redirectPath = currentPath.replace('/match/', '/matchadblock/');
-        }
-        
-        log('Simulating AdBlock detection - redirecting to:', redirectPath);
-        alert('Simulating AdBlock detection - redirecting to: ' + redirectPath);
-        window.location.href = redirectPath;
-      } else {
-        alert('Already on AdBlock version: ' + currentPath);
-      }
-    };
-    
-    // Add function to test current detection and redirect
-    window.testCurrentDetection = function() {
-      log('Testing current detection and redirect logic...');
-      detectAdblock().then(blocked => {
-        const currentPath = window.location.pathname;
-        const isOnAdblockPage = currentPath.includes('adblock');
-        
-        log('Detection result:', blocked);
-        log('Current path:', currentPath);
-        log('Is on adblock page:', isOnAdblockPage);
-        
-        let shouldRedirect = false;
-        let redirectPath = '';
-        
-        if (blocked && !isOnAdblockPage) {
-          // AdBlock detected, not on adblock page - should redirect to adblock page
-          shouldRedirect = true;
-          if (currentPath === '/') {
-            redirectPath = '/homepageadblock';
-          } else if (currentPath.includes('/football')) {
-            redirectPath = '/footballadblock';
-          } else if (currentPath.includes('/basketball')) {
-            redirectPath = '/basketballadblock';
-          } else if (currentPath.includes('/tennis')) {
-            redirectPath = '/tennisadblock';
-          } else if (currentPath.includes('/ufc')) {
-            redirectPath = '/ufcadblock';
-          } else if (currentPath.includes('/rugby')) {
-            redirectPath = '/rugbyadblock';
-          } else if (currentPath.includes('/baseball')) {
-            redirectPath = '/baseballadblock';
-          } else if (currentPath.includes('/match/')) {
-            redirectPath = currentPath.replace('/match/', '/matchadblock/');
-          }
-        } else if (!blocked && isOnAdblockPage) {
-          // No AdBlock detected, on adblock page - should redirect to clean page
-          shouldRedirect = true;
-          if (currentPath === '/homepageadblock') {
-            redirectPath = '/';
-          } else if (currentPath.includes('/footballadblock')) {
-            redirectPath = '/football';
-          } else if (currentPath.includes('/basketballadblock')) {
-            redirectPath = '/basketball';
-          } else if (currentPath.includes('/tennisadblock')) {
-            redirectPath = '/tennis';
-          } else if (currentPath.includes('/ufcadblock')) {
-            redirectPath = '/ufc';
-          } else if (currentPath.includes('/rugbyadblock')) {
-            redirectPath = '/rugby';
-          } else if (currentPath.includes('/baseballadblock')) {
-            redirectPath = '/baseball';
-          } else if (currentPath.includes('/matchadblock/')) {
-            redirectPath = currentPath.replace('/matchadblock/', '/match/');
-          }
-        }
-        
-        const result = {
-          blocked,
-          currentPath,
-          isOnAdblockPage,
-          shouldRedirect,
-          redirectPath
-        };
-        
-        log('Test result:', result);
-        alert(`Detection Test Results:\nAdBlock Detected: ${blocked}\nCurrent Path: ${currentPath}\nIs on AdBlock Page: ${isOnAdblockPage}\nShould Redirect: ${shouldRedirect}\nRedirect Path: ${redirectPath}`);
-        
-        if (shouldRedirect) {
-          if (confirm('Redirect to: ' + redirectPath + '?')) {
-            window.location.href = redirectPath;
-          }
-        }
-      });
-    };
-    
     log('Starting AdBlock detection...');
     detectAdblock().then(blocked => {
       window.adConfig.adBlockDetected = !!blocked;
@@ -438,70 +300,8 @@
         log('Error setting body class:', e);
       }
       if (blocked) {
-        // AdBlock detected - redirect to ad-heavy version
-        log('AdBlock detected - redirecting to ad-heavy version');
-        
-        const currentPath = window.location.pathname;
-        
-        // Only redirect if we're NOT already on an AdBlock version
-        if (!currentPath.includes('adblock')) {
-          let redirectPath = '/homepageadblock'; // Default to homepage
-          
-          if (currentPath === '/' || currentPath === '/homepageadblock') {
-            redirectPath = '/homepageadblock';
-          } else if (currentPath.includes('/football')) {
-            redirectPath = '/footballadblock';
-          } else if (currentPath.includes('/basketball')) {
-            redirectPath = '/basketballadblock';
-          } else if (currentPath.includes('/tennis')) {
-            redirectPath = '/tennisadblock';
-          } else if (currentPath.includes('/ufc')) {
-            redirectPath = '/ufcadblock';
-          } else if (currentPath.includes('/rugby')) {
-            redirectPath = '/rugbyadblock';
-          } else if (currentPath.includes('/baseball')) {
-            redirectPath = '/baseballadblock';
-          } else if (currentPath.includes('/match/')) {
-            redirectPath = currentPath.replace('/match/', '/matchadblock/');
-          }
-          
-          log('Redirecting AdBlock user to:', redirectPath);
-          window.location.href = redirectPath;
-          return; // Stop execution to prevent further processing
-        }
+        log('AdBlock detected - showing banner (no redirect)');
       } else {
-        // No AdBlock detected - redirect to clean version
-        log('AdBlock OFF - redirecting to clean version');
-        
-        const currentPath = window.location.pathname;
-        
-        // Only redirect if we're on an AdBlock version
-        if (currentPath.includes('adblock')) {
-          let redirectPath = '/'; // Default to homepage
-          
-          if (currentPath === '/homepageadblock') {
-            redirectPath = '/';
-          } else if (currentPath.includes('/footballadblock')) {
-            redirectPath = '/football';
-          } else if (currentPath.includes('/basketballadblock')) {
-            redirectPath = '/basketball';
-          } else if (currentPath.includes('/tennisadblock')) {
-            redirectPath = '/tennis';
-          } else if (currentPath.includes('/ufcadblock')) {
-            redirectPath = '/ufc';
-          } else if (currentPath.includes('/rugbyadblock')) {
-            redirectPath = '/rugby';
-          } else if (currentPath.includes('/baseballadblock')) {
-            redirectPath = '/baseball';
-          } else if (currentPath.includes('/matchadblock/')) {
-            redirectPath = currentPath.replace('/matchadblock/', '/match/');
-          }
-          
-          log('Redirecting non-AdBlock user to:', redirectPath);
-          window.location.href = redirectPath;
-          return; // Stop execution to prevent further processing
-        }
-        
         // Only hide ads on non-match pages, never on match pages
         const isMatchPage = /^\/match\//.test(location.pathname);
         if (!isMatchPage) {
@@ -605,16 +405,7 @@
             document.body.classList.add('adblock-off');
             const banner = document.getElementById('adblock-banner');
             if (banner) banner.style.display = 'none';
-            log('Manual AdBlock OFF test activated - should redirect to clean version');
-            // Trigger detection again to test redirect
-            setTimeout(() => {
-              detectAdblock().then(blocked => {
-                log('Re-detection result:', blocked);
-                if (!blocked && window.location.pathname.includes('adblock')) {
-                  log('Should redirect to clean version now');
-                }
-              });
-            }, 100);
+            log('Manual AdBlock OFF test activated');
           };
           document.body.appendChild(offBtn);
         }
@@ -654,34 +445,10 @@
                 if (modal) modal.classList.add('hidden');
                 const banner = document.getElementById('adblock-banner');
                 if (banner) banner.style.display = 'none';
-                
-                // Redirect to clean version if on AdBlock version
-                const currentPath = window.location.pathname;
-                if (currentPath.includes('adblock')) {
-                  let redirectPath = '/'; // Default to homepage
-                  
-                  if (currentPath === '/homepageadblock') {
-                    redirectPath = '/';
-                  } else if (currentPath.includes('/footballadblock')) {
-                    redirectPath = '/football';
-                  } else if (currentPath.includes('/basketballadblock')) {
-                    redirectPath = '/basketball';
-                  } else if (currentPath.includes('/tennisadblock')) {
-                    redirectPath = '/tennis';
-                  } else if (currentPath.includes('/ufcadblock')) {
-                    redirectPath = '/ufc';
-                  } else if (currentPath.includes('/rugbyadblock')) {
-                    redirectPath = '/rugby';
-                  } else if (currentPath.includes('/baseballadblock')) {
-                    redirectPath = '/baseball';
-                  } else if (currentPath.includes('/matchadblock/')) {
-                    redirectPath = currentPath.replace('/matchadblock/', '/match/');
-                  }
-                  
-                  log('AdBlock disabled - redirecting to clean version:', redirectPath);
-                  setTimeout(() => {
-                    window.location.href = redirectPath;
-                  }, 500);
+                if (feedback) {
+                  feedback.textContent = 'AdBlock is off. You\'re good!';
+                  feedback.classList.remove('hidden');
+                  setTimeout(() => feedback.classList.add('hidden'), 2000);
                 }
               } else {
                 if (feedback) {
